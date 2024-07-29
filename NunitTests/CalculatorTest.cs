@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using UnitTestPractise;
 
-namespace NunitTests
+namespace NunitTests//nunittest
 {
     [TestFixture]
     public class CalculatorTest
