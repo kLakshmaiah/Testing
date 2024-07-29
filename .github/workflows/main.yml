@@ -1,35 +1,35 @@
 name: CI
 
-   on: [push, pull_request]
+on: [push, pull_request]
 
-   jobs:
-     build:
-       runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-       steps:
-       - name: Checkout code
-         uses: actions/checkout@v2
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-       - name: Setup .NET
-         uses: actions/setup-dotnet@v1
-         with:
-           dotnet-version: '8.0.x' # Specify .NET 8
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x' # Specify .NET 8
 
-       - name: Restore dependencies
-         run: dotnet restore Testing.sln
+    - name: Restore dependencies
+      run: dotnet restore Testing.sln
 
-       - name: Build
-         run: dotnet build Testing.sln --no-restore
+    - name: Build
+      run: dotnet build Testing.sln --no-restore
 
-       - name: Run tests with coverage
-         run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage"
+    - name: Run tests with coverage
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage"
 
-       - name: Generate coverage report
-         run: |
-           reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+    - name: Generate coverage report
+      run: |
+        reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
 
-       - name: Upload coverage report
-         uses: actions/upload-artifact@v2
-         with:
-           name: coverage-report
-           path: coverage-report
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage-report
