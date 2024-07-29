@@ -33,6 +33,9 @@ jobs:
       env:
         PATH: $PATH:/home/runner/.dotnet/tools
 
+    - name: Verify coverage report existence
+      run: ls -la coverage-report
+
     - name: Upload coverage report as artifact
       uses: actions/upload-artifact@v2
       with:
