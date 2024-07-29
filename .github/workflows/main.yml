@@ -28,7 +28,7 @@ jobs:
       run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
     - name: Verify test results directory
-      run: ls -la $(find . -name TestResults)
+      run: find . -name TestResults -exec ls -la {} \;
 
     - name: Generate coverage report
       run: |
@@ -38,6 +38,10 @@ jobs:
 
     - name: Verify coverage report existence
       run: ls -la coverage-report
+
+    - name: Find coverage file
+      id: coverage-file
+      run: echo "::set-output name=coverage_file::$(find . -name coverage.cobertura.xml)"
 
     - name: Upload coverage report as artifact
       uses: actions/upload-artifact@v2
@@ -49,7 +53,7 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # Ensure this secret is defined in your repository settings
-        files: TestResults/coverage.cobertura.xml
+        files: ${{ steps.coverage-file.outputs.coverage_file }}
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: true
