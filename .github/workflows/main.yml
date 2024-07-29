@@ -42,7 +42,7 @@ jobs:
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
-        token: ${{ secrets.8d8f29f9-7fa0-447a-9751-33bed9d4bf8e }} # Reference the correct secret name
+        token: ${{ secrets.8d8f29f9-7fa0-447a-9751-33bed9d4bf8e }} # Ensure this secret is defined in your repository settings
         files: ./coverage-report/coverage.cobertura.xml
         flags: unittests
         name: codecov-umbrella
