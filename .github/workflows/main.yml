@@ -22,38 +22,20 @@ jobs:
       run: dotnet build Testing.sln --no-restore
 
     - name: Run tests with coverage
-      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage"
-
-    - name: Install ReportGenerator
-      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
 
     - name: Verify test results directory
       run: find . -name TestResults -exec ls -la {} \;
 
-    - name: Generate coverage report
-      run: |
-        reportgenerator -reports:**/TestResults/*/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
-      env:
-        PATH: $PATH:/home/runner/.dotnet/tools
-
-    - name: Verify coverage report existence
-      run: ls -la coverage-report
-
     - name: Find coverage file
       id: coverage-file
-      run: echo "::set-output name=coverage_file::$(find . -name coverage.cobertura.xml)"
-
-    - name: Upload coverage report as artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage-report
-        path: coverage-report
+      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # Ensure this secret is defined in your repository settings
-        files: ${{ steps.coverage-file.outputs.coverage_file }}
+        files: ${{ env.coverage_file }}
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: true
