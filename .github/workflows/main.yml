@@ -33,8 +33,16 @@ jobs:
       env:
         PATH: $PATH:/home/runner/.dotnet/tools
 
-    - name: Upload coverage report
+    - name: Upload coverage report as artifact
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
         path: coverage-report
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.8d8f29f9-7fa0-447a-9751-33bed9d4bf8e }}
+        files: **/coverage.cobertura.xml
+        flags: unittests
+        name: codecov-umbrella
