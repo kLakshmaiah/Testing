@@ -1,6 +1,6 @@
 name: Code Coverage
 
-on: [push,pull_request]
+on: [pull_request]
 
 jobs:
   base_branch_cov:
@@ -20,6 +20,9 @@ jobs:
 
       - name: Run test coverage
         run: dotnet test --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
+
+      - name: List coverage directory
+        run: ls -la ./coverage/
 
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v3
@@ -48,6 +51,9 @@ jobs:
 
       - name: Run test coverage
         run: dotnet test --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
+
+      - name: List coverage directory
+        run: ls -la ./coverage/
 
       # Compares two code coverage files and generates a report as a comment
       - name: Generate Code Coverage report
