@@ -18,7 +18,7 @@ namespace NunitTests
             {
                 userDetails?.Login(string.Empty, string.Empty);
             });
-            Assert.Throws<ArgumentException>(() =>
+            _ = Assert.Throws<ArgumentException>(() =>
             {
                 userDetails?.Login("Laxman", string.Empty);
             });
