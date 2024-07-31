@@ -1,10 +1,11 @@
 name: Code Coverage
 
-on: [push,pull_request]
+on: [push, pull_request]
 
 jobs:
   base_branch_cov:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -33,7 +34,7 @@ jobs:
 
   checks:
     runs-on: ubuntu-latest
-    needs: base_branch_cov
+    needs: [base_branch_cov]
     steps:
       - uses: actions/checkout@v3
 
@@ -67,3 +68,41 @@ jobs:
           minimum-ratio: 0 # Fails GitHub action once code coverage is decreasing
           send-summary-comment: true
           show-annotations: "warning" # Possible options warning|error
+
+  coverage_report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x' # Specify the appropriate .NET version
+
+      - name: Restore dependencies
+        run: dotnet restore Testing.sln
+
+      - name: Build
+        run: dotnet build Testing.sln --no-restore
+
+      - name: Run tests with coverage
+        run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
+
+      - name: List coverage files
+        run: ls -la ./coverage/
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator -reports:./coverage/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+        env:
+          PATH: $PATH:/home/runner/.dotnet/tools
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-report
+          path: coverage-report
