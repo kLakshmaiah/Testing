@@ -1,42 +1,76 @@
-name: CI
+name: Code Coverage
 
 on:
   push:
     branches:
-      - main
+      - '**'
   pull_request:
     branches:
-      - main
+      - '**'
 
 jobs:
-  build:
+  base_branch_cov:
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'pull_request'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore Testing.sln
 
-      - name: Build the project
-        run: dotnet build --no-restore
+      - name: Run test coverage
+        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
 
-      - name: Run tests with coverage
-        run: dotnet test --no-build --collect:"XPlat Code Coverage"
+      - name: List coverage directory
+        run: ls -la ./coverage/
 
-      - name: Upload code coverage results
-        uses: actions/upload-artifact@v2
+      - name: Upload code coverage for ref branch
+        if: always()
+        uses: actions/upload-artifact@v3
         with:
-          name: code-coverage-report
-          path: '**/TestResults/*/coverage.cobertura.xml'
+          name: ref-lcov.info
+          path: ./coverage/lcov.info
 
-      - name: Generate code coverage report
-        uses: FreeCoverlet/Free-Code-Coverage@v1
+  checks:
+    runs-on: ubuntu-latest
+    needs: base_branch_cov
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
         with:
-          coverageFiles: '**/TestResults/*/coverage.cobertura.xml'
+          dotnet-version: '8.0.x'
+
+      - name: Download code coverage report from base branch
+        uses: actions/download-artifact@v3
+        with:
+          name: ref-lcov.info
+
+      - name: Restore dependencies
+        run: dotnet restore Testing.sln
+
+      - name: Run test coverage
+        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
+
+      - name: List coverage directory
+        run: ls -la ./coverage/
+
+      # Compares two code coverage files and generates a report as a comment
+      - name: Generate Code Coverage report
+        id: code-coverage
+        uses: barecheck/code-coverage-action@v1
+        with:
+          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+          lcov-file: "./coverage/lcov.info"
+          base-lcov-file: "./ref-lcov.info"
+          minimum-ratio: 0 # Fails GitHub action once code coverage is decreasing
+          send-summary-comment: true
+          show-annotations: "warning"
