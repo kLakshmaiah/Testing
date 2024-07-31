@@ -34,15 +34,6 @@ jobs:
       id: coverage-file
       run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }} # Ensure this secret is defined in your repository settings
-        files: ${{ env.coverage_file }}
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
-
     - name: Code Coverage Report
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
@@ -53,11 +44,12 @@ jobs:
         hide_branch_rate: false
         hide_complexity: true
         indicators: true
-        output: both
+        output: console
         thresholds: '60 80'
 
-    - name: Upload Coverage Report
-      uses: actions/upload-artifact@v2
+    - name: Add Coverage PR Comment
+      if: github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
       with:
-        name: code-coverage-results
+        recreate: true
         path: code-coverage-results.md
