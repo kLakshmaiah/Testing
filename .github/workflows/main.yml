@@ -34,10 +34,11 @@ jobs:
       id: coverage-file
       run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
-    - name: List files in working directory
-      run: ls -la
-      
     - name: Free Code Coverage
       uses: SamuelCabralCruz/free-code-coverage@v0.0.13
       with:
         args: '--output-directory coverage' # Example argument, adjust as needed
+
+    - name: List files in working directory
+      run: ls -la
+
