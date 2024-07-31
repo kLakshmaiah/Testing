@@ -35,6 +35,7 @@ jobs:
       run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
     - name: Code Coverage Report
+      id: coverage-summary
       uses: irongut/CodeCoverageSummary@v1.3.0
       with:
         filename: ${{ env.coverage_file }}
