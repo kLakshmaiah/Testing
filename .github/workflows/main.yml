@@ -1,6 +1,12 @@
 name: Code Coverage
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   base_branch_cov:
@@ -14,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.x' # Specify the appropriate .NET version
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
         run: dotnet restore Testing.sln
@@ -41,7 +47,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.x' # Specify the appropriate .NET version
+          dotnet-version: '8.0.x'
 
       - name: Download code coverage report from base branch
         uses: actions/download-artifact@v3
@@ -67,4 +73,4 @@ jobs:
           base-lcov-file: "./ref-lcov.info"
           minimum-ratio: 0 # Fails GitHub action once code coverage is decreasing
           send-summary-comment: true
-          show-annotations: "warning" # Possible options warning|error
+          show-annotations: "warning"
