@@ -21,5 +21,30 @@ jobs:
     - name: Build
       run: dotnet build Testing.sln --no-restore
 
+    - name: Run tests with coverage
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+
+    - name: Verify test results directory
+      run: find . -name TestResults -exec ls -la {} \;
+
+    - name: List coverage files
+      run: find . -name coverage.cobertura.xml
+
+    - name: Find coverage file
+      id: coverage-file
+      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+
+    - name: List files in working directory
+      run: ls -la
+
+    - name: Add Coverage PR Comment
+      if: github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        recreate: true
+        path: code-coverage-results.md
+
     - name: Free Code Coverage
       uses: SamuelCabralCruz/free-code-coverage@v0.0.13
+      with:
+        args: '--output-directory coverage' # Example argument, adjust as needed
