@@ -25,6 +25,7 @@ jobs:
         run: ls -la ./coverage/
 
       - name: Upload code coverage for ref branch
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: ref-lcov.info
