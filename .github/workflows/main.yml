@@ -21,7 +21,7 @@ jobs:
     - name: Run tests with coverage
       run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
 
-    - name: List all directories and files
+    - name: List all files and directories
       run: find . -type d -or -type f
 
     - name: Verify test results directory
