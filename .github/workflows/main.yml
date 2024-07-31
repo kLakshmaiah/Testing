@@ -34,6 +34,6 @@ jobs:
       with:
         barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
         lcov-file: ${{ env.coverage_file }}
-        base-lcov-file: "./TestResults/base-lcov.info" # Adjust this if you have a base coverage file
+        base-lcov-file: ${{ env.coverage_file }} # Adjust this if you have a base coverage file
         send-summary-comment: true
         show-annotations: "warning"
