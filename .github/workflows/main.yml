@@ -26,39 +26,42 @@ jobs:
 
     - name: Find coverage file
       id: coverage-file
-      run: |
-        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set coverage file output
+      run: echo "::set-output name=coverage_file::$(find . -name coverage.cobertura.xml)"
+      id: set-coverage-file
       shell: bash
 
     - name: Print coverage file path
-      run: |
-        echo "Coverage file path: ${{ env.coverage_file }}"
-      shell: bash
+      run: echo "Coverage file path: ${{ steps.set-coverage-file.outputs.coverage_file }}"
 
     - name: Install ReportGenerator
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
 
     - name: Convert Cobertura to LCOV
-      run: reportgenerator -reports:${{ env.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
-      shell: bash
+      run: reportgenerator -reports:${{ steps.set-coverage-file.outputs.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
 
     - name: Find LCOV file
-      id: lcov-file
-      run: |
-        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_ENV
+      id: find-lcov-file
+      run: echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set LCOV file output
+      run: echo "::set-output name=lcov_file::$(find ./TestResults/ -name coverage.lcov)"
+      id: set-lcov-file
       shell: bash
 
     - name: Print LCOV file path
-      run: |
-        echo "LCOV file path: ${{ env.lcov_file }}"
-      shell: bash
+      run: echo "LCOV file path: ${{ steps.set-lcov-file.outputs.lcov_file }}"
 
     - name: Generate Code Coverage report
       id: code-coverage
       uses: barecheck/code-coverage-action@v1
       with:
         barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-        lcov-file: ${{ env.lcov_file }}
-        base-lcov-file: ${{ env.lcov_file }} # Adjust this if you have a base coverage file
+        lcov-file: ${{ steps.set-lcov-file.outputs.lcov_file }}
+        base-lcov-file: ${{ steps.set-lcov-file.outputs.lcov_file }} # Adjust this if you have a base coverage file
         send-summary-comment: true
         show-annotations: "warning"
