@@ -48,8 +48,12 @@ jobs:
       run: |
         echo "LCOV file path: ${{ env.lcov_file }}"
 
-    - name: Upload coverage to Free Code Coverage
-      uses: freecodecoverage/freecodecoverage-action@v1
+    - name: Generate Code Coverage report
+      id: code-coverage
+      uses: barecheck/code-coverage-action@v1
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        coverage-file: ${{ env.lcov_file }}
+        barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+        lcov-file: ${{ env.lcov_file }}
+        base-lcov-file: ${{ env.lcov_file }} # Adjust this if you have a base coverage file
+        send-summary-comment: true
+        show-annotations: "warning"
