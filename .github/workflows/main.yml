@@ -1,43 +1,55 @@
-name: Coverlet coverage test
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
+name: CI
+on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Check out repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up .NET
+    - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '8.0.x' # Specify .NET 8
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Testing.sln
 
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build Testing.sln --no-restore
 
     - name: Run tests with coverage
-      run: dotnet test --no-build --collect:"XPlat Code Coverage"
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
 
-    - name: Convert coverage report to lcov
+    - name: List all files and directories
+      run: find . -type d -or -type f
+
+    - name: Find coverage file
+      id: coverage-file
       run: |
-        reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coveragereport -reporttypes:lcov
-      env:
-        DOTNET_ROOT: /usr/share/dotnet
+        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v2
+    - name: Print coverage file path
+      run: |
+        echo "Coverage file path: ${{ env.coverage_file }}"
+
+    - name: Install ReportGenerator
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+
+    - name: Convert Cobertura to LCOV
+      run: reportgenerator -reports:${{ env.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
+
+    - name: Find LCOV file
+      id: lcov-file
+      run: |
+        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_ENV
+
+    - name: Print LCOV file path
+      run: |
+        echo "LCOV file path: ${{ env.lcov_file }}"
+
+    - name: Upload coverage to Free Code Coverage
+      uses: freecodecoverage/freecodecoverage-action@v1
       with:
-        name: code-coverage-report
-        path: coveragereport
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        coverage-file: ${{ env.lcov_file }}
