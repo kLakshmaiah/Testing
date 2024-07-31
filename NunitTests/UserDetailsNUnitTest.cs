@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using NunitTests.CodeClass;
-
 namespace NunitTests
 {
     [TestFixture]
