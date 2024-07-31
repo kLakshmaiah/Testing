@@ -1,17 +1,10 @@
 name: Code Coverage
 
-on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
+on: [push, pull_request]
 
 jobs:
   base_branch_cov:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -49,11 +42,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Download code coverage report from base branch
-        uses: actions/download-artifact@v3
-        with:
-          name: ref-lcov.info
-
       - name: Restore dependencies
         run: dotnet restore Testing.sln
 
@@ -63,14 +51,21 @@ jobs:
       - name: List coverage directory
         run: ls -la ./coverage/
 
+      - name: Download code coverage report from base branch
+        if: github.event_name == 'pull_request'
+        uses: actions/download-artifact@v3
+        with:
+          name: ref-lcov.info
+
       # Compares two code coverage files and generates a report as a comment
       - name: Generate Code Coverage report
+        if: github.event_name == 'pull_request'
         id: code-coverage
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: "./coverage/lcov.info"
           base-lcov-file: "./ref-lcov.info"
-          minimum-ratio: 0 # Fails GitHub action once code coverage is decreasing
+          minimum-ratio: 0
           send-summary-comment: true
           show-annotations: "warning"
