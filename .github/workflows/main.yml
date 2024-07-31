@@ -27,11 +27,12 @@ jobs:
     - name: Find coverage file
       id: coverage-file
       run: |
-        echo "::set-output name=coverage_file::$(find . -name coverage.cobertura.xml)"
-      shell: bash
+        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_OUTPUT
 
     - name: Print coverage file path
-      run: echo "Coverage file path: ${{ steps.coverage-file.outputs.coverage_file }}"
+      run: |
+        echo "Coverage file path: ${{ steps.coverage-file.outputs.coverage_file }}"
 
     - name: Install ReportGenerator
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
@@ -42,11 +43,12 @@ jobs:
     - name: Find LCOV file
       id: lcov-file
       run: |
-        echo "::set-output name=lcov_file::$(find ./TestResults/ -name coverage.lcov)"
-      shell: bash
+        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_ENV
+        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_OUTPUT
 
     - name: Print LCOV file path
-      run: echo "LCOV file path: ${{ steps.lcov-file.outputs.lcov_file }}"
+      run: |
+        echo "LCOV file path: ${{ steps.lcov-file.outputs.lcov_file }}"
 
     - name: Generate Code Coverage report
       id: code-coverage
