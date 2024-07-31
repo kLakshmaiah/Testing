@@ -19,17 +19,31 @@ jobs:
         run: dotnet restore Testing.sln
 
       - name: Run test coverage
-        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
+        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+        env:
+          PATH: $PATH:/home/runner/.dotnet/tools
 
       - name: List coverage directory
-        run: ls -la ./coverage/
+        run: |
+          if [ -d "./coverage-report/" ]; then
+            ls -la ./coverage-report/
+          else
+            echo "Coverage report directory does not exist."
+          fi
 
-      - name: Upload code coverage for ref branch
+      - name: Upload coverage report for ref branch
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ref-lcov.info
-          path: ./coverage/lcov.info
+          name: coverage-report
+          path: coverage-report
 
   checks:
     runs-on: ubuntu-latest
@@ -42,30 +56,22 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore Testing.sln
-
-      - name: Run test coverage
-        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
-
-      - name: List coverage directory
-        run: ls -la ./coverage/
-
       - name: Download code coverage report from base branch
         if: github.event_name == 'pull_request'
         uses: actions/download-artifact@v3
         with:
-          name: ref-lcov.info
+          name: coverage-report
+          path: coverage-report
 
-      # Compares two code coverage files and generates a report as a comment
-      - name: Generate Code Coverage report
-        if: github.event_name == 'pull_request'
-        id: code-coverage
-        uses: barecheck/code-coverage-action@v1
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./coverage/lcov.info"
-          base-lcov-file: "./ref-lcov.info"
-          minimum-ratio: 0
-          send-summary-comment: true
-          show-annotations: "warning"
+      - name: Restore dependencies
+        run: dotnet restore Testing.sln
+
+      - name: Run test coverage
+        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
