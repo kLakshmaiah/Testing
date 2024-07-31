@@ -1,36 +1,35 @@
 name: CI
 on: [push, pull_request]
-jobs: build: runs-on: ubuntu-latest
-steps:
-- name: Checkout code
-  uses: actions/checkout@v2
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-- name: Setup .NET
-  uses: actions/setup-dotnet@v1
-  with:
-    dotnet-version: '8.0.x' # Specify .NET 8
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x' # Specify .NET 8
 
-- name: Restore dependencies
-  run: dotnet restore Testing.sln
+    - name: Restore dependencies
+      run: dotnet restore Testing.sln
 
-- name: Build
-  run: dotnet build Testing.sln --no-restore
+    - name: Build
+      run: dotnet build Testing.sln --no-restore
 
-- name: Run tests with coverage
-  run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+    - name: Run tests with coverage
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
 
-- name: Verify test results directory
-  run: find . -name TestResults -exec ls -la {} \;
+    - name: Verify test results directory
+      run: find . -name TestResults -exec ls -la {} \;
 
-- name: Find coverage file
-  id: coverage-file
-  run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+    - name: Find coverage file
+      id: coverage-file
+      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
 
-- name: Upload coverage to Codecov
-  uses: codecov/codecov-action@v2
-  with:
-    token: ${{ secrets.CODECOV_TOKEN }} # Ensure this secret is defined in your repository settings
-    files: ${{ env.coverage_file }}
-    flags: unittests
-    name: codecov-umbrella
-    fail_ci_if_error: true
+    - name: Upload coverage to Barecheck
+      uses: Barecheck/github-action@v1
+      with:
+        token: ${{ secrets.BARECHECK_TOKEN }} # Ensure this secret is defined in your repository settings
+        coverage: ${{ env.coverage_file }}
