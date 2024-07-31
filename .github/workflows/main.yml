@@ -44,7 +44,7 @@ jobs:
         hide_branch_rate: false
         hide_complexity: true
         indicators: true
-        output: console
+        output: both
         thresholds: '60 80'
 
     - name: Add Coverage PR Comment
