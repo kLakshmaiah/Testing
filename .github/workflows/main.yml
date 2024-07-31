@@ -19,17 +19,20 @@ jobs:
       run: dotnet build Testing.sln --no-restore
 
     - name: Run tests with coverage
-      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
 
-    - name: Verify coverage directory
-      run: find . -name coverage -exec ls -la {} \;
+    - name: Verify test results directory
+      run: find . -name TestResults -exec ls -la {} \;
+
+    - name: List TestResults directory contents
+      run: ls -la ./TestResults/
 
     - name: Generate Code Coverage report
       id: code-coverage
       uses: barecheck/code-coverage-action@v1
       with:
         barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-        lcov-file: "./coverage/coverage.cobertura.xml"
-        base-lcov-file: "./coverage/base-lcov.info" # Adjust this if you have a base coverage file
+        lcov-file: "./TestResults/coverage.cobertura.xml"
+        base-lcov-file: "./TestResults/base-lcov.info" # Adjust this if you have a base coverage file
         send-summary-comment: true
         show-annotations: "warning"
