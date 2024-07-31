@@ -1,75 +1,62 @@
-name: CI
-on: [push, pull_request]
+name: Code Coverage
+
+on: [pull_request]
+
 jobs:
-  build:
+  base_branch_cov:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '8.0.x' # Specify .NET 8
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x' # Specify the appropriate .NET version
 
-    - name: Restore dependencies
-      run: dotnet restore Testing.sln
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build Testing.sln --no-restore
+      - name: Run test coverage
+        run: dotnet test --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
 
-    - name: Run tests with coverage
-      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+      - name: Upload code coverage for ref branch
+        uses: actions/upload-artifact@v3
+        with:
+          name: ref-lcov.info
+          path: ./coverage/lcov.info
 
-    - name: List all files and directories
-      run: find . -type d -or -type f
+  checks:
+    runs-on: ubuntu-latest
+    needs: base_branch_cov
+    steps:
+      - uses: actions/checkout@v3
 
-    - name: Find coverage file
-      id: coverage-file
-      run: |
-        coverage_file=$(find . -name coverage.cobertura.xml)
-        echo "coverage_file=$coverage_file" >> $GITHUB_ENV
-        echo "##[set-output name=coverage_file]$coverage_file"
-        echo "Coverage file path: $coverage_file"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x' # Specify the appropriate .NET version
 
-    - name: Print coverage file path
-      run: |
-        echo "Coverage file path: ${{ steps.coverage-file.outputs.coverage_file }}"
+      - name: Download code coverage report from base branch
+        uses: actions/download-artifact@v3
+        with:
+          name: ref-lcov.info
 
-    - name: Install ReportGenerator
-      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Convert Cobertura to LCOV
-      run: reportgenerator -reports:${{ steps.coverage-file.outputs.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
+      - name: Run test coverage
+        run: dotnet test --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
 
-    - name: Find LCOV file
-      id: lcov-file
-      run: |
-        lcov_file=$(find ./TestResults/ -name coverage.lcov)
-        echo "lcov_file=$lcov_file" >> $GITHUB_ENV
-        echo "##[set-output name=lcov_file]$lcov_file"
-        echo "LCOV file path: $lcov_file"
-
-    - name: Print LCOV file path
-      run: |
-        echo "LCOV file path: ${{ steps.lcov-file.outputs.lcov_file }}"
-
-    - name: Debug LCOV file existence
-      run: |
-        echo "Checking if LCOV file exists at ${{ steps.lcov-file.outputs.lcov_file }}"
-        if [ -f "${{ steps.lcov-file.outputs.lcov_file }}" ]; then
-          echo "LCOV file exists at ${{ steps.lcov-file.outputs.lcov_file }}"
-        else
-          echo "LCOV file not found at ${{ steps.lcov-file.outputs.lcov_file }}"
-          find ./TestResults/ -name coverage.lcov
-        fi
-
-    - name: Generate Code Coverage report
-      id: code-coverage
-      uses: barecheck/code-coverage-action@v1
-      with:
-        barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-        lcov-file: ${{ steps.lcov-file.outputs.lcov_file }}
-        base-lcov-file: ${{ steps.lcov-file.outputs.lcov_file }} # Adjust this if you have a base coverage file
-        send-summary-comment: true
-        show-annotations: "warning"
+      # Compares two code coverage files and generates a report as a comment
+      - name: Generate Code Coverage report
+        id: code-coverage
+        uses: barecheck/code-coverage-action@v1
+        with:
+          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+          lcov-file: "./coverage/lcov.info"
+          base-lcov-file: "./ref-lcov.info"
+          minimum-ratio: 0 # Fails GitHub action once code coverage is decreasing
+          send-summary-comment: true
+          show-annotations: "warning" # Possible options warning|error
