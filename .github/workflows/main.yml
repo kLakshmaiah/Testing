@@ -53,9 +53,8 @@ jobs:
         output: both
         thresholds: '60 80'
 
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v2
       with:
-        recreate: true
+        name: code-coverage-results
         path: code-coverage-results.md
