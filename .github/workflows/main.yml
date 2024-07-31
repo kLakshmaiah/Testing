@@ -30,6 +30,9 @@ jobs:
     - name: List coverage files
       run: find . -name coverage.info
 
+    - name: Debug: List all files in coverage directory
+      run: ls -la ./coverage/
+
     - name: Find coverage file
       id: coverage-file
       run: echo "coverage_file=$(find . -name coverage.info)" >> $GITHUB_ENV
