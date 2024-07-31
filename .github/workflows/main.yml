@@ -1,39 +1,42 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '8.0.x' # Specify .NET 8
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore Testing.sln
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build Testing.sln --no-restore
+      - name: Build the project
+        run: dotnet build --no-restore
 
-    - name: Run tests with coverage
-      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+      - name: Run tests with coverage
+        run: dotnet test --no-build --collect:"XPlat Code Coverage"
 
-    - name: List all files and directories
-      run: find . -type d -or -type f
+      - name: Upload code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: '**/TestResults/*/coverage.cobertura.xml'
 
-    - name: Find coverage file
-      id: coverage-file
-      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
-
-    - name: Generate Code Coverage report
-      id: code-coverage
-      uses: barecheck/code-coverage-action@v1
-      with:
-        barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-        lcov-file: ${{ env.coverage_file }}
-        base-lcov-file: ${{ env.coverage_file }} # Adjust this if you have a base coverage file
-        send-summary-comment: true
-        show-annotations: "warning"
+      - name: Generate code coverage report
+        uses: FreeCoverlet/Free-Code-Coverage@v1
+        with:
+          coverageFiles: '**/TestResults/*/coverage.cobertura.xml'
