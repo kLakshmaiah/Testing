@@ -24,15 +24,6 @@ jobs:
     - name: Run tests with coverage
       run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
 
-    - name: Verify test results directory
-      run: find . -name TestResults -exec ls -la {} \;
-
-    - name: List coverage files
-      run: find . -name coverage.info
-
-    - name: Debug: List all files in coverage directory
-      run: ls -la ./coverage/
-
     - name: Find coverage file
       id: coverage-file
       run: echo "coverage_file=$(find . -name coverage.info)" >> $GITHUB_ENV
