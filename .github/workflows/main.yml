@@ -27,8 +27,9 @@ jobs:
     - name: Find coverage file
       id: coverage-file
       run: |
-        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
-        echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_OUTPUT
+        coverage_file=$(find . -name coverage.cobertura.xml)
+        echo "coverage_file=$coverage_file" >> $GITHUB_ENV
+        echo "coverage_file=$coverage_file" >> $GITHUB_OUTPUT
 
     - name: Print coverage file path
       run: |
@@ -43,12 +44,21 @@ jobs:
     - name: Find LCOV file
       id: lcov-file
       run: |
-        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_ENV
-        echo "lcov_file=$(find ./TestResults/ -name coverage.lcov)" >> $GITHUB_OUTPUT
+        lcov_file=$(find ./TestResults/ -name coverage.lcov)
+        echo "lcov_file=$lcov_file" >> $GITHUB_ENV
+        echo "lcov_file=$lcov_file" >> $GITHUB_OUTPUT
 
     - name: Print LCOV file path
       run: |
         echo "LCOV file path: ${{ steps.lcov-file.outputs.lcov_file }}"
+
+    - name: Debug LCOV file existence
+      run: |
+        if [ -f "${{ steps.lcov-file.outputs.lcov_file }}" ]; then
+          echo "LCOV file exists at ${{ steps.lcov-file.outputs.lcov_file }}"
+        else
+          echo "LCOV file not found at ${{ steps.lcov-file.outputs.lcov_file }}"
+        fi
 
     - name: Generate Code Coverage report
       id: code-coverage
