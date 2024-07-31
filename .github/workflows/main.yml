@@ -22,17 +22,17 @@ jobs:
       run: dotnet build Testing.sln --no-restore
 
     - name: Run tests with coverage
-      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=lcov /p:CoverletOutput=./coverage/
 
     - name: Verify test results directory
       run: find . -name TestResults -exec ls -la {} \;
 
     - name: List coverage files
-      run: find . -name coverage.cobertura.xml
+      run: find . -name coverage.info
 
     - name: Find coverage file
       id: coverage-file
-      run: echo "coverage_file=$(find . -name coverage.cobertura.xml)" >> $GITHUB_ENV
+      run: echo "coverage_file=$(find . -name coverage.info)" >> $GITHUB_ENV
 
     - name: Code Coverage Report
       id: coverage-summary
@@ -57,14 +57,14 @@ jobs:
       with:
         recreate: true
         path: code-coverage-results.md
-        
+
     - name: Generate Code Coverage report
       id: code-coverage
       uses: barecheck/code-coverage-action@v1
       with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./coverage/lcov.info"
-          base-lcov-file: "./lcov.info"
-          minimum-ratio: 0 # Fails Github action once code coverage is decreasing
-          send-summary-comment: true
-          show-annotations: "warning" # Possible options warning|error
+        barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+        lcov-file: "./coverage/coverage.info"
+        base-lcov-file: "./lcov.info"
+        minimum-ratio: 0 # Fails Github action once code coverage is decreasing
+        send-summary-comment: true
+        show-annotations: "warning" # Possible options warning|error
