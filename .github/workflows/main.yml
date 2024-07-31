@@ -30,16 +30,15 @@ jobs:
         coverage_file=$(find . -name coverage.cobertura.xml)
         echo "coverage_file=$coverage_file" >> $GITHUB_ENV
         echo "coverage_file=$coverage_file" >> $GITHUB_OUTPUT
-
-    - name: Print coverage file path
-      run: |
-        echo "Coverage file path: ${{ steps.coverage-file.outputs.coverage_file }}"
+        echo "Coverage file path: $coverage_file"
 
     - name: Install ReportGenerator
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
 
     - name: Convert Cobertura to LCOV
-      run: reportgenerator -reports:${{ steps.coverage-file.outputs.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
+      run: reportgenerator -reports:${{ env.coverage_file }} -targetdir:./TestResults/ -reporttypes:lcov
+      env:
+        coverage_file: ${{ steps.coverage-file.outputs.coverage_file }}
 
     - name: Find LCOV file
       id: lcov-file
@@ -47,25 +46,12 @@ jobs:
         lcov_file=$(find ./TestResults/ -name coverage.lcov)
         echo "lcov_file=$lcov_file" >> $GITHUB_ENV
         echo "lcov_file=$lcov_file" >> $GITHUB_OUTPUT
-
-    - name: Print LCOV file path
-      run: |
-        echo "LCOV file path: ${{ steps.lcov-file.outputs.lcov_file }}"
+        echo "LCOV file path: $lcov_file"
 
     - name: Debug LCOV file existence
       run: |
-        if [ -f "${{ steps.lcov-file.outputs.lcov_file }}" ]; then
-          echo "LCOV file exists at ${{ steps.lcov-file.outputs.lcov_file }}"
+        echo "Checking if LCOV file exists at ${{ env.lcov_file }}"
+        if [ -f "${{ env.lcov_file }}" ]; then
+          echo "LCOV file exists at ${{ env.lcov_file }}"
         else
-          echo "LCOV file not found at ${{ steps.lcov-file.outputs.lcov_file }}"
-        fi
-
-    - name: Generate Code Coverage report
-      id: code-coverage
-      uses: barecheck/code-coverage-action@v1
-      with:
-        barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-        lcov-file: ${{ steps.lcov-file.outputs.lcov_file }}
-        base-lcov-file: ${{ steps.lcov-file.outputs.lcov_file }} # Adjust this if you have a base coverage file
-        send-summary-comment: true
-        show-annotations: "warning"
+          echo "LCOV file not found a
