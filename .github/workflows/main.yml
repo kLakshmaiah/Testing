@@ -36,14 +36,7 @@ jobs:
 
     - name: List files in working directory
       run: ls -la
-
-    - name: Add Coverage PR Comment
-      if: github.event_name == 'pull_request'
-      uses: marocchino/sticky-pull-request-comment@v2
-      with:
-        recreate: true
-        path: code-coverage-results.md
-
+      
     - name: Free Code Coverage
       uses: SamuelCabralCruz/free-code-coverage@v0.0.13
       with:
