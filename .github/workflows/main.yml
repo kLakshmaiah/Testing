@@ -1,77 +1,40 @@
-name: Code Coverage
+name: CI
 
 on: [push, pull_request]
 
 jobs:
-  base_branch_cov:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.base_ref }}
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x' # Specify .NET 8
 
-      - name: Restore dependencies
-        run: dotnet restore Testing.sln
+    - name: Restore dependencies
+      run: dotnet restore Testing.sln
 
-      - name: Run test coverage
-        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
+    - name: Build
+      run: dotnet build Testing.sln --no-restore
 
-      - name: Install ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+    - name: Run tests with coverage
+      run: dotnet test Testing.sln --no-build --collect:"XPlat Code Coverage"
 
-      - name: Generate coverage report
-        run: |
-          reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
-        env:
-          PATH: $PATH:/home/runner/.dotnet/tools
+    - name: Install ReportGenerator
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
-      - name: List coverage directory
-        run: |
-          if [ -d "./coverage-report/" ]; then
-            ls -la ./coverage-report/
-          else
-            echo "Coverage report directory does not exist."
-          fi
+    - name: Generate coverage report
+      run: |
+        reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+      env:
+        PATH: $PATH:/home/runner/.dotnet/tools
 
-      - name: Upload coverage report for ref branch
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage-report
-          path: coverage-report
-
-  checks:
-    runs-on: ubuntu-latest
-    needs: base_branch_cov
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Download code coverage report from base branch
-        if: github.event_name == 'pull_request'
-        uses: actions/download-artifact@v3
-        with:
-          name: coverage-report
-          path: coverage-report
-
-      - name: Restore dependencies
-        run: dotnet restore Testing.sln
-
-      - name: Run test coverage
-        run: dotnet test Testing.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./coverage/
-
-      - name: Install ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool
-
-      - name: Generate coverage report
-        run: |
-          reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage-report
